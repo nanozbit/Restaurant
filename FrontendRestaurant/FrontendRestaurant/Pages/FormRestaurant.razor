@@ -1,0 +1,140 @@
+﻿@page "/formRestaurant"
+@page "/formRestaurant/{id:int}"
+
+@using Services.Models
+@using Services.Interface
+
+
+@inject ICityService CityService
+@inject IRestaurantService RestaurantService
+@inject Microsoft.AspNetCore.Components.NavigationManager  UriHelper
+
+<h3>Formulario de Restaurante</h3>
+@if (restaurant == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    
+<EditForm  Model="@restaurant" OnValidSubmit="@saveRestaurant"  >
+    <DataAnnotationsValidator />
+
+    <table class="table">
+        <tr>
+            <td>Ciudad</td>
+            <td>
+                <InputSelect @bind-Value="restaurant.IdCiudad">
+                    @foreach (var item in restaurant.Ciudad)
+                        {
+                        <option value="@item.IdCiudad">@item.NombreCiudad</option>
+                        }
+                </InputSelect>
+                <ValidationMessage For="@(()=> restaurant.IdCiudad)" />
+            </td>
+        </tr>
+        <tr>
+            <td>Nombre restaurante</td>
+            <td><InputText @bind-Value="restaurant.NombreRestaurante"/></td>
+            <ValidationMessage For="@(()=> restaurant.NombreRestaurante)" />
+        </tr>
+        <tr>
+            <td>Numero Aforo</td>
+            <td><InputNumber @bind-Value="restaurant.NumeroAforo"  /></td>
+            <ValidationMessage For="@(()=> restaurant.NumeroAforo)" />
+        </tr>
+        <tr>
+            <td>Telefono</td>
+            <td><InputText @bind-Value="restaurant.Telefono" /></td>
+            <ValidationMessage For="@(()=> restaurant.Telefono)" />
+
+        </tr>
+        <tr class="form-group">
+            <td>
+                <button type="submit" class="btn  btn-primary">Save</button>
+            </td>
+        </tr>
+    </table>
+
+</EditForm>
+}
+
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    RestaurantFormModel restaurant;
+    IEnumerable<RestaurantModel> listRestaurant;
+
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        listRestaurant = await RestaurantService.ListRestaurant();
+        var tokenString = await GetToken();
+
+        if (id == 0)
+        {
+            var cities = await CityService.ListCity(tokenString.Replace("\"", ""));
+            restaurant = new RestaurantFormModel()
+            {
+                Ciudad = cities.ToList(),
+                IdCiudad = 0
+            };
+
+        }
+        else
+        {
+            await LoadEditModel(id);
+        }
+
+    }
+
+
+    public async Task<string> GetToken()
+    {
+
+        var token = await RestaurantService.GetToken();
+        var keyToken = token.First();
+        return keyToken.Token;
+    }
+
+    public async Task LoadEditModel(int id)
+    {
+
+
+        var tokenString = await GetToken();
+        var list = listRestaurant.Where(item => item.IdRestaurante == id).First();
+        var cities = await CityService.ListCity(tokenString.Replace("\"", ""));
+
+        restaurant = new RestaurantFormModel()
+        {
+            Telefono = list.Telefono,
+            IdRestaurante = list.IdRestaurante,
+            NombreRestaurante = list.NombreRestaurante,
+            NumeroAforo = list.NumeroAforo,
+            Ciudad = cities.ToList(),
+            IdCiudad = list.IdCiudad
+        };
+        
+
+    }
+
+    public async Task saveRestaurant()
+    {
+        if(id== 0)
+        {
+            await RestaurantService.SaveRestaurant(restaurant);
+            UriHelper.NavigateTo("/restaurant");
+        }
+        else
+        {
+            await RestaurantService.UpdateRestaurant(restaurant);
+            UriHelper.NavigateTo("/restaurant");
+        }
+
+
+    }
+
+}

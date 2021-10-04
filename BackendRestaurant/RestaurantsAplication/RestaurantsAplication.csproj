@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Interface\ICityService.cs~RF3a8d5f1d.TMP" />
+    <None Remove="Mappings\CityApplicationToDomainProfile.cs~RF3ad50130.TMP" />
+    <None Remove="Mappings\RestaurantApplicationToDomainProfile.cs~RF3ea0aa2e.TMP" />
+    <None Remove="Mappings\RestaurantDomainToApplicationProfile.cs~RF3ea7a867.TMP" />
+    <None Remove="Services\CityService.cs~RF481cb22b.TMP" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="10.1.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.12.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Restaurants.Domain\Restaurants.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

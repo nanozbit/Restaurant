@@ -1,0 +1,39 @@
+﻿@page "/"
+@inject IJSRuntime jsRuntime
+@if (message == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+<div>
+    <h1>@( $"{message[0]} {message[1]} {message[2]}")</h1>
+
+    Welcome to your new app.
+
+
+    <SurveyPrompt Title="How is Blazor working for you?" />
+</div>
+    
+ }
+
+@code {
+    IJSObjectReference module;
+    string[] message;
+    protected override async Task OnInitializedAsync()
+    {
+            await loadArray();
+            await setArray();
+       
+    }
+    async Task loadArray()
+    {
+        module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", "./Util.js");
+    }
+
+    async Task setArray()
+    {
+        message = await module.InvokeAsync<string[]>("welcomeArray");
+        Console.WriteLine(message[0]);
+    }
+}

@@ -1,0 +1,107 @@
+﻿@page "/restaurant"
+
+@using Services.Interface
+@using Services.Models
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject Microsoft.AspNetCore.Components.NavigationManager  UriHelper
+
+@inject IRestaurantService RestaurantService
+@inject ICityService CityService
+
+<h1>Lista de Restaurantes</h1>
+
+<NavLink class="btn btn-secondary" href="formRestaurant">
+    Nuevo  Restaurante
+</NavLink>
+@if (restaurants == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre Restaurant</th>
+                <th>Nombre Ciudad</th>
+                <th>Numero de Aforo</th>
+                <th>Telefono</th>
+                <th>Fecha Creacion</th>
+                <th>Operaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in restaurants)
+            {
+                <tr>
+                    <td>@item.IdRestaurante</td>
+                    <td>@item.NombreRestaurante</td>
+                    <td>@item.NombreCiudad</td>
+                    <td>@item.NumeroAforo</td>
+                    <td>@item.Telefono</td>
+                    <td>@item.FechaCreacion.ToShortDateString()</td>
+                    <td>
+                        <div>
+                            <a href="@($"/formRestaurant/{item.IdRestaurante}")" class="btn btn-success" >Editar</a>
+                            <button class="btn btn-danger" @onclick="@(() => DeleteRestaurant(item.IdRestaurante))">Borrar</button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    IEnumerable<RestaurantModel> restaurants;
+    private string tokenString;
+    protected override async Task OnInitializedAsync()
+    {
+        tokenString = await GetToken();
+        restaurants = await ListRestaurant();
+    }
+
+   
+
+ 
+
+    public async Task<string> GetToken()
+    {
+        var token = await RestaurantService.GetToken();
+        var keyToken = token.First();
+        await sessionStorage.SetItemAsync("token", keyToken.Token);
+        return keyToken.Token;
+    }
+
+    public async Task<string> GetCityName(int id)
+    {
+        var city = await CityService.GetCity(id, tokenString);
+        string nameCity = city.First().NombreCiudad;
+        return nameCity;
+    }
+    public async Task DeleteRestaurant(int id)
+    {
+        await RestaurantService.DeleteRestaurant(id);
+        restaurants = restaurants.Where(c => c.IdRestaurante != id);
+
+    }
+
+    public void EditRestaurant(int id)
+    {
+        UriHelper.NavigateTo($"/formRestaurant/{id}");
+
+    }
+
+    public async Task<IEnumerable<RestaurantModel>> ListRestaurant()
+    {
+        var list = await RestaurantService.ListRestaurant();
+        list = list.ToList();
+        foreach (var item in list)
+        {
+            var temp = await CityService.GetCity(item.IdCiudad, tokenString);
+            item.NombreCiudad = temp.First().NombreCiudad;
+        }
+        return list;
+    }
+}

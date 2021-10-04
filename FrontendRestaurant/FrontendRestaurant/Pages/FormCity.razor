@@ -1,0 +1,128 @@
+﻿@page "/formCity"
+@page "/formCity/{id:int}"
+
+@using Services.Models
+@using Services.Interface
+
+@inject ICityService CityService
+@inject IRestaurantService RestaurantService
+@inject Microsoft.AspNetCore.Components.NavigationManager  UriHelper
+
+<h3>Fomulario de Ciudad</h3>
+
+@if (city == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+
+<EditForm  Model="city" OnValidSubmit="@saveCity">
+    <DataAnnotationsValidator />
+    
+    <table class="table">
+        <tr>
+            <td>Nombre Ciudad</td>
+            <td>
+            <InputText @bind-Value="city.NombreCiudad" />
+            </td>
+            <ValidationMessage For="@(()=> city.NombreCiudad)" />
+        </tr>
+        <tr class="form-group">
+            <td>
+                <button type="submit" class="btn  btn-primary">Save</button>
+            </td>
+        </tr>
+    </table>
+</EditForm>
+}
+
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+
+    CityModel city;
+    private string Token { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+
+        Token = await GetToken();
+        if (id == 0)
+        {
+            city = new CityModel();
+
+        } else
+        {
+            var list = await CityService.GetCity(id, Token);
+            city = list.First();
+
+        }
+    }
+
+    //protected override async Task OnAfterRenderAsync(bool firstRender)
+    //{
+    //    if (!firstRender && !city.Empty  )
+    //    {
+    //        Console.WriteLine($"{city.NombreCiudad}");
+    //        await AutoSave();
+    //    }
+    //}
+
+    public async Task<string> GetToken()
+    {
+
+        var token = await RestaurantService.GetToken();
+        var keyToken = token.First();
+
+        return keyToken.Token;
+    }
+
+    public async Task saveCity()
+    {
+        if (id == 0)
+        {
+            await CityService.SaveCity(city, Token);
+            UriHelper.NavigateTo("/city");
+        }
+        else
+        {
+            await CityService.UpdateCity(city, Token);
+            UriHelper.NavigateTo("/city");
+        }
+
+
+    }
+
+    public async Task AutoSave ()
+    {
+
+
+        if (id != 0)
+        {
+            Console.WriteLine("estoy actualizando");
+            await CityService.UpdateCity(city, Token);
+
+        }
+        else
+        {
+
+            var cityObj = await CityService.GetCity(city.IdCiudad, Token);
+            var idCity = cityObj.ToList().First() != null ? cityObj.ToList().First().IdCiudad : 0;
+
+            if (city.IdCiudad == idCity)
+            {
+                await CityService.SaveCity(city, Token);
+                var cityObj1 = await CityService.GetCity(city.IdCiudad, Token);
+            }
+            else
+            {
+                Console.WriteLine("estoy actualizando");
+                await CityService.UpdateCity(city, Token);
+            }
+
+        }
+    }
+}

@@ -1,0 +1,73 @@
+﻿@page "/city"
+@using Services.Interface
+@using Services.Models
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject ICityService CityService
+@inject IRestaurantService RestaurantService
+
+<h1>Lista de ciudades</h1>
+<NavLink class="btn btn-secondary" href="formCity">
+    Nueva Ciudad
+</NavLink>
+@if (cities == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre Ciudad</th>
+                <th>Fecha Ciudad</th>
+                <th>Operaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in cities)
+            {
+            <tr>
+                
+                <td>@item.IdCiudad</td>
+                <td>@item.NombreCiudad</td>
+                <td>@item.FechaCreacion.ToShortDateString()</td>
+
+                <td> <div>
+                        <a href="@($"/formCity/{item.IdCiudad}")" class="btn btn-success">Editar</a>
+                        <button class="btn btn-danger" @onclick="@(() => DeleteCity(item.IdCiudad))">Borrar</button>
+                    </div>
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    IEnumerable<CityModel> cities;
+    private string tokenString;
+    protected override async Task OnInitializedAsync()
+    {
+        tokenString = await  GetToken();
+        cities = await CityService.ListCity(tokenString.Replace("\"", ""));
+    }
+
+    public async Task DeleteCity(int id)
+    {
+        await CityService.DeleteCity(id, tokenString);
+        cities = cities.Where(c => c.IdCiudad != id);
+
+    }
+
+    public async Task<string> GetToken ()
+    {
+        var token = await RestaurantService.GetToken();
+        var keyToken = token.First();
+        await sessionStorage.SetItemAsync("token", keyToken.Token);
+        return keyToken.Token;
+    }
+
+
+
+}
